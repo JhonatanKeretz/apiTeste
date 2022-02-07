@@ -24,22 +24,25 @@ router.post('/login', async (req, res) => {
 
   try {
     let user = await User.findOne({ email });
-    if(!user)
-    res.status(401).json({error: 'Senha ou email incorretos!'});
-    else {
-      user.isCorrectPassword(password, function(err, same) {
-        if(!same)
-        res.status(401).json({ error: 'Senha ou email incorretos!'})
-        else {
-           const token = jwt.sign({email}, secret, { expiresIn: '10d' });
-           res.json({ user: user, token: token}) 
-        }
-      })
+
+    if(!user) {
+      return res.status(401).json({error: 'Senha ou email incorretos!'});
     }
-  }catch (error) {
-    res.status(500).json({ error: 'Erro interno, por favor tente novamente'})
     
+    const comparePasswords = user.isCorrectPassword(password)
+    
+    if (!comparePasswords) {
+      return res.status(401).json({ error: 'Senha ou email incorretos!'})
+    }
+
+    const token = jwt.sign({email}, secret, { expiresIn: '10d' });
+    return res.json({ user, token }) 
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: 'Erro interno, por favor tente novamente'})
+   
   }
 })
+
 
 module.exports = router;
